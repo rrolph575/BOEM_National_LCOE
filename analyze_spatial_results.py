@@ -13,6 +13,9 @@ import pylab
 from mpl_toolkits import mplot3d
 
 
+
+#### !!! Convert this to reading the gpkg file instead of this exported csv in case files change.  The gpkg are the updated ofiles. (didn't have access to eagle at time, that is why script was written this way).
+
 datapath = 'C:/Users/rrolph/OneDrive - NREL/Projects/BOEM_IAA_NationalLCOE/analyzing_results/230717_supply_curves/230717_supply_curves/'
 # all cost components in the results csv are reported for a 600 MW plant; but CapEx, OpEx, LCOE are reported for a 1,000 MW plant (i.e., the latter should be divided by 1000x1000 for a $/kW value). 
 
