@@ -34,16 +34,15 @@ with open(cost_reductions_yaml, 'r') as stream:
 
 ### Apply cost reductions by looping through domains and nested loop of years
 domains = ['gulf',  'hi', 'ma', 'na', 'sa', 'wc']
-#domains = ['na'] # for debugging !!!
-rating = '2_20MW' # Apply cost reduction to most recent available rating
 projected_years = ['2040', '2045', '2050']
 
 for domain in domains:
     print(domain)
-    if domain == 'gulf':
+    if domain == 'gulf': # Apply cost reduction to most recent available rating
         rating = '2_17MWlowSP_gulf_35'
         ifile = gpkg_filepath + rating + '.gpkg'
     else:
+        rating = '2_20MW' # Apply cost reduction to most recent available rating
         ifile = gpkg_filepath + rating + '_' + domain + '.gpkg'
     data = gpd.read_file(ifile)
     
