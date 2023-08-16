@@ -15,19 +15,23 @@ For selected lat/lons and turbine ratings (which correspond to assumed years), m
 """
 
 #### Inputs 
-datapath = 'C:/Users/rrolph/OneDrive - NREL/Projects/BOEM_IAA_NationalLCOE/data_collection/check_gen_output/results/'
+basepath = 'C:/Users/rrolph/OneDrive - NREL/Projects/BOEM_IAA_NationalLCOE/analyzing_results/'
+datapath = basepath + 'outfiles_from_eagle/'
+figpath = basepath + 'figures/timeseries/'
+ofilepath = basepath + 'timeseries_data_files/'
+
 # Specify region from filenames in above datapath
-sitename = 'Morro Bay'  # 'Morro Bay' or 'Vineyard Wind 1'
+sitename = 'Morro_Bay'  # 'Morro_Bay' or 'VineyardWind1'
 #sitename = 'Vineyard Wind 1'
 use_mid_atlantic_data = False
 
-if sitename == 'Morro Bay':
+if sitename == 'Morro_Bay':
     region_filename_ending = '_wc.gpkg' 
     lat = 35.58
     lon = -121.83
     ofilename_ext = '_'
 
-if sitename == 'Vineyard Wind 1':
+if sitename == 'VineyardWind1':
     region_filename_ending = '_na.gpkg' 
     lat = 41.07031
     lon = -70.50910
@@ -41,10 +45,9 @@ if sitename == 'Vineyard Wind 1':
         # and shapefile https://www.boem.gov/renewable-energy/mapping-and-data/renewable-energy-gis-data 
 
 
-selected_data_closest_all = pd.Series({'lcoe': 5, 'capex_kw': 5, 'opex_kw': 5, 'mean_cf': 5, 'rating': 5}) # initialize series
-
 
 ### Find closest point
+selected_data_closest_all = pd.Series({'lcoe': 5, 'capex_kw': 5, 'opex_kw': 5, 'mean_cf': 5, 'rating': 5}) # initialize series
 rating = '0_12MW'
 ifile = datapath + rating + region_filename_ending    
 ### Read files
@@ -57,6 +60,7 @@ site_lat_lon_gdf = site_lat_lon_gdf.to_crs(crs=data_gdf.crs)
 gdf_with_distances_to_sel_point = data_gdf.sjoin_nearest(site_lat_lon_gdf, how='inner', distance_col = 'distance')
 # find index with minimum distance to the selected point
 idx_closest = gdf_with_distances_to_sel_point['distance'].idxmin()
+
 
     
 ### Read in data from all ratings
@@ -82,7 +86,11 @@ selected_data_closest_all = selected_data_closest_all.drop(columns=0)
 selected_data_closest_all.columns = ratings
 
 
+
 ### Make plots of data
+
+# Save the data
+selected_data_closest_all.to_pickle(ofilepath + sitename + '_lcoe_capex_opex_2025_thru_2035.pkl')
 
 # LCOE
 fig, ax = plt.subplots()
@@ -99,7 +107,7 @@ for (index, replacement) in zip(indices, replacements):
 ax.set_xticklabels(labels, size=20)
 y_labels = ax.get_yticklabels()
 ax.set_yticklabels(y_labels, size=20)
-plt.savefig('figures/lcoe_' + sitename + '_' + ofilename_ext + '.png', bbox_inches='tight')
+plt.savefig(figpath + '/lcoe_' + sitename + '_' + ofilename_ext + '.png', bbox_inches='tight')
 
 # CapEx and OpEx
 fig, ax = plt.subplots()
@@ -118,7 +126,7 @@ ax2.set_xticklabels(labels, size=20)
 ylabels_ax2 = ax2.get_yticklabels()
 ax2.set_yticklabels(ylabels_ax2, size=20)
 ax.set_xlabel('COD (Year)', size=20)
-plt.savefig('figures/capex_and_opex_' + sitename + '_' + ofilename_ext + '.png', bbox_inches='tight')
+plt.savefig(figpath + 'capex_and_opex_' + sitename + '_' + ofilename_ext + '.png', bbox_inches='tight')
 
 # Net Capacity factor
 fig, ax = plt.subplots()
@@ -130,8 +138,7 @@ ax.set_xticklabels(labels, size=20)
 y_labels = ax.get_yticklabels()
 ax.set_yticklabels(y_labels, size=20)
 ax.set_xlabel('COD (Year)', size=20)
-plt.savefig('figures/ncf_' + sitename + '_' + ofilename_ext + '.png', bbox_inches='tight')
-
+plt.savefig(figpath + 'ncf_' + sitename + '_' + ofilename_ext + '.png', bbox_inches='tight')
 
 
 
