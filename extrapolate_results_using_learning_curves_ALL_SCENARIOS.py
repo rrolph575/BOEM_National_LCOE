@@ -4,6 +4,10 @@
 Extrapolate the reV/NRWAL cost modelling output into future years, using an assumed learning curve.
 More specifically, extrapolate lcoe, capex, opex only (the only parameters we have cost reduction values for) and save to gpkg data for 2040-2050. Also calculates new lcoe, capex, and opex values based on different learning curve scenarios.
 
+# Conservative:  most expensive scenario
+# Mid: middle (baseline)
+# Advanced: least expensive scenario
+
 Created on Mon Aug  7 13:51:27 2023
 
 @author: rrolph
@@ -38,13 +42,10 @@ with open(cost_reductions_yaml, 'r') as stream:
 
 
 ### Apply cost reductions by looping through domains and nested loop of years
-#domains = ['gulf',  'hi', 'ma', 'na', 'sa', 'wc']
-domains = ['gulf']
-#year_range = np.arange(2025,2055,5)
-year_range = np.array([2025, 2030])
+domains = ['gulf',  'hi', 'ma', 'na', 'sa', 'wc']
+year_range = np.arange(2025,2055,5)
 projected_years = np.arange(2040, 2055, 5)
-#scenarios = ['conservative', 'mid', 'advanced']
-scenarios = ['conservative']
+scenarios = ['conservative', 'mid', 'advanced']
 
 for domain in domains:
    
@@ -124,7 +125,7 @@ for domain in domains:
             ## lcoe = (capex * fixed_charge_rate + opex) / (cf_mean * 1000 * 8760) # opex is 1GW plant cost, AEP is now 1GW
             fixed_charge_rate = 0.0767 # div by 100. e.g. 7.67 prcnt = 0.0767 here.
             # ($/kW)*(1e3 kW/ 1 MW) --> $/MW
-            data_cost_reduction_applied['lcoe'] = 1e3*(data_cost_reduction_applied['capex_kw'] * fixed_charge_rate + data_cost_reduction_applied['opex_kw']) / (data_cost_reduction_applied['mean_cf'] * 8760 )
+            data_cost_reduction_applied['lcoe'] = 1e3*(data_cost_reduction_applied['capex_kw'] * fixed_charge_rate + data_cost_reduction_applied['opex_kw']) / (data_cost_reduction_applied['mean_cf'] * 8760)
                 
             # Save dataframe with reduced costs to file. note that capex, opex and lcoe no longer correspond with some other outdata of reV now (e.g. export)
             data_cost_reduction_applied.to_file(ofile, driver='GPKG')
