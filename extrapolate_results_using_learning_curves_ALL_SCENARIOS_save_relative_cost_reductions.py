@@ -42,13 +42,21 @@ with open(cost_reductions_yaml, 'r') as stream:
 
 
 ### Apply cost reductions by looping through domains and nested loop of years
-domains = ['gulf',  'hi', 'ma', 'na', 'sa', 'wc']
+domains = ['gulf', 'ma', 'sa']
+# domains = ['gulf',  'hi', 'ma', 'na', 'sa', 'wc']
+# domains = ['na', 'wc', 'hi'] # for debugging !!!
 year_range = np.arange(2025,2055,5)
 projected_years = np.arange(2040, 2055, 5)
 scenarios = ['conservative', 'mid', 'advanced']
 
+# initialize cost reduction matrix
+capex_cost_reduction_fixed = np.empty((3,len(year_range)))  # each row is a scenario (conserv, mid, adv) which relates respectively to (expensive, mid, cheap)
+capex_cost_reduction_floating = np.empty((3,len(year_range)))  
+opex_cost_reduction_fixed = np.empty((3,len(year_range))) 
+opex_cost_reduction_floating = np.empty((3,len(year_range))) 
+    
 for domain in domains:
-   
+        
     for ind, year in enumerate(year_range):
         
         ## Read in mid scenarios cost reduction values.  These will be used to calculate the cost reductions applied, which are relative to these mid scenario values.
@@ -75,7 +83,7 @@ for domain in domains:
         data_cost_reduction_applied = data.copy(deep=True) # initialize new dataset to be modified
 
            
-        for scenario in scenarios:
+        for idx, scenario in enumerate(scenarios):
             
             ## Define ofile where the modified costs will be written based on scenario, year, and domain
             ofile = gpkg_filepath_reduced_costs + domain + '_' + str(year) + '_' + scenario + '.gpkg'
@@ -86,39 +94,38 @@ for domain in domains:
             if scenario == 'mid':
                 if year in projected_years:
                     # CapEx
-                    capex_cost_reduction_fixed = capex_cost_reduction_fixed_mid
-                    capex_cost_reduction_floating = capex_cost_reduction_floating_mid
+                    capex_cost_reduction_fixed[idx, ind] = capex_cost_reduction_fixed_mid
+                    capex_cost_reduction_floating[idx, ind] = capex_cost_reduction_floating_mid
                     # OpEx
-                    opex_cost_reduction_fixed = opex_cost_reduction_fixed_mid
-                    opex_cost_reduction_floating = opex_cost_reduction_floating_mid
+                    opex_cost_reduction_fixed[idx, ind] = opex_cost_reduction_fixed_mid
+                    opex_cost_reduction_floating[idx,ind]= opex_cost_reduction_floating_mid
                 else: 
-                    capex_cost_reduction_fixed = 0 
-                    capex_cost_reduction_floating = 0 
-                    opex_cost_reduction_fixed = 0
-                    opex_cost_reduction_floating = 0
+                    capex_cost_reduction_fixed[idx, ind] = 0 
+                    capex_cost_reduction_floating[idx, ind] = 0 
+                    opex_cost_reduction_fixed[idx, ind] = 0
+                    opex_cost_reduction_floating[idx, ind] = 0
             
             if scenario == 'conservative' or 'advanced':
                 # CapEx
-                capex_cost_reduction_fixed = capex_cost_reduction_fixed_mid - cost_reductions_dict['fixed_' + scenario + '_scenario']['capex_' + str(year)]
-                capex_cost_reduction_floating = capex_cost_reduction_floating_mid - cost_reductions_dict['floating_' + scenario + '_scenario']['capex_' + str(year)]
+                capex_cost_reduction_fixed[idx, ind] = cost_reductions_dict['fixed_' + scenario + '_scenario']['capex_' + str(year)] - capex_cost_reduction_fixed_mid
+                capex_cost_reduction_floating[idx, ind] = cost_reductions_dict['floating_' + scenario + '_scenario']['capex_' + str(year)] - capex_cost_reduction_floating_mid
                 # OpEx
-                opex_cost_reduction_fixed = opex_cost_reduction_fixed_mid - cost_reductions_dict['fixed_' + scenario + '_scenario']['opex_' + str(year)]
-                opex_cost_reduction_floating = opex_cost_reduction_floating_mid - cost_reductions_dict['floating_' + scenario + '_scenario']['opex_' + str(year)]
+                opex_cost_reduction_fixed[idx, ind] = cost_reductions_dict['fixed_' + scenario + '_scenario']['opex_' + str(year)] - opex_cost_reduction_fixed_mid
+                opex_cost_reduction_floating[idx, ind] = cost_reductions_dict['floating_' + scenario + '_scenario']['opex_' + str(year)] - opex_cost_reduction_floating_mid
         
-
-            
+        
             ### Modify capex and opex data
             ## CapEx            
             # fixed 
-            data_cost_reduction_applied.loc[data_cost_reduction_applied.depth < 60, 'capex_kw'] = data.loc[data.depth < 60, 'capex_kw'] * (1 - capex_cost_reduction_fixed)
+            data_cost_reduction_applied.loc[data_cost_reduction_applied.depth < 60, 'capex_kw'] = data.loc[data.depth < 60, 'capex_kw'] * (1 - capex_cost_reduction_fixed[idx, ind])
             # floating
-            data_cost_reduction_applied.loc[data_cost_reduction_applied.depth > 60, 'capex_kw'] = data.loc[data.depth > 60, 'capex_kw'] * (1 - capex_cost_reduction_floating)
+            data_cost_reduction_applied.loc[data_cost_reduction_applied.depth > 60, 'capex_kw'] = data.loc[data.depth > 60, 'capex_kw'] * (1 - capex_cost_reduction_floating[idx, ind])
                 
             ## Opex
             # fixed
-            data_cost_reduction_applied.loc[data_cost_reduction_applied.depth < 60, 'opex_kw'] = data.loc[data.depth < 60, 'opex_kw'] * (1 - opex_cost_reduction_fixed)
+            data_cost_reduction_applied.loc[data_cost_reduction_applied.depth < 60, 'opex_kw'] = data.loc[data.depth < 60, 'opex_kw'] * (1 - opex_cost_reduction_fixed[idx, ind])
             # floating
-            data_cost_reduction_applied.loc[data_cost_reduction_applied.depth > 60, 'opex_kw'] = data.loc[data.depth > 60, 'opex_kw'] * (1 - opex_cost_reduction_floating)
+            data_cost_reduction_applied.loc[data_cost_reduction_applied.depth > 60, 'opex_kw'] = data.loc[data.depth > 60, 'opex_kw'] * (1 - opex_cost_reduction_floating[idx, ind])
                 
                 
             ### Calculate new LCOE using the newly reduced capex and opex values
@@ -130,6 +137,11 @@ for domain in domains:
             # Save dataframe with reduced costs to file. note that capex, opex and lcoe no longer correspond with some other outdata of reV now (e.g. export)
             data_cost_reduction_applied.to_file(ofile, driver='GPKG')
                 
-    
+
+# save the relative cost reductions for each scenario. the same cost reductions are applied across all domains.
+np.save('rel_cost_reductions_capex_fixed.npy',capex_cost_reduction_fixed)
+np.save('rel_cost_reductions_capex_floating.npy', capex_cost_reduction_floating)
+np.save('rel_cost_reductions_opex_fixed.npy', opex_cost_reduction_fixed)
+np.save('rel_cost_reductions_opex_floating.npy', opex_cost_reduction_floating)
     
     

@@ -27,7 +27,7 @@ gpkg_filepath_reduced_costs = basepath + 'new_gpkg_files_with_cost_reductions_ap
 # Specify region from filenames in above datapath
 sitenames = ['Morro_Bay', 'VineyardWind1'] # str as in filename
 labels_for_sitenames = ['Morro Bay', 'Vineyard Wind 1'] # str for plot
-sitename = 'Morro_Bay'  # 'Morro_Bay' or 'VineyardWind1'
+sitename = 'VineyardWind1'  # 'Morro_Bay' or 'VineyardWind1'
 use_mid_atlantic_data = False
 
 if sitename == 'Morro_Bay':
@@ -50,7 +50,9 @@ if sitename == 'VineyardWind1':
         ofilename_ext = 'using_MidAtlantic_data'
         # Site 2: Vineyard Wind 1 call area https://www.boem.gov/renewable-energy/state-activities/vineyard-wind-1 
         # and shapefile https://www.boem.gov/renewable-energy/mapping-and-data/renewable-energy-gis-data 
-
+    
+if sitename == 'Site1':
+    
 
 # Commented because already ran
 # ### Find closest point by using representative ifile
